@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     print "Loading font ..."
     font_name = 'FreeMono.ttf'
-    font = ImageFont.truetype('fonts/%s' % font_name, min(delta_x, delta_y))
+    font = ImageFont.truetype('fonts/freefont-20100919/%s' % font_name, min(delta_x, delta_y))
 
     print "Generating %d reference images ..." % (len(SYMBOLS))
     ref_images = []
