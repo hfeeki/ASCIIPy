@@ -1,6 +1,6 @@
 import math
 
-import Image, ImageChops, ImageDraw, ImageMath
+import Image, ImageChops, ImageDraw, ImageMath, ImageFilter
 
 class Method(object):
     HAMMING = 0

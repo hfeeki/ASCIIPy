@@ -110,10 +110,8 @@ if __name__ == '__main__':
     font = ImageFont.truetype('fonts/%s' % font_name, min(delta_x, delta_y))
 
     print "Generating %d reference images ..." % (len(SYMBOLS))
-    im = create_image(SYMBOLS[0], font, delta_x, delta_y)
-    ref_images = [im]
-
-    for char in SYMBOLS[1:]:
+    ref_images = []
+    for char in SYMBOLS:
         im = create_image(char, font, delta_x, delta_y)
         ref_images.append(im)
 
@@ -132,10 +130,12 @@ if __name__ == '__main__':
                     new_diff = dist(tile, ref_img, Method.HAMMING)
                 elif opts.method == 'zncc':
                     new_diff = dist(tile, ref_img, Method.ZNCC)
+                else:
+                    sys.exit('unknown method')
                 if new_diff < diff:
                     diff = new_diff
                     idx = i
-                s2 += SYMBOLS[idx]
+            s2 += SYMBOLS[idx]
         s2 += '\n' 
         y += 1
 
