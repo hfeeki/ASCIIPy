@@ -6,16 +6,27 @@ class Method(object):
     HAMMING = 0
     ZNCC = 1
 
-def edgify(image, binary_threshold=150, smoothen=0, invert=False):
+def average(image):
+    colors = image.getcolors()
+    avg = 0 
+    su  = 0
+    for color in colors:
+        su += color[0]
+        avg += color[0]*color[1]
+    avg /= su
+    return avg
+
+def edgify(image, binary_threshold=150, smoothen=0, invert=False, edgify=True):
     '''Converts an image into a B/W edge representation'''
     image = image.convert('L')
-    image = image.filter(ImageFilter.FIND_EDGES)
-    image = ImageChops.invert(image)
-    for i in range(0, smoothen):
-        image = image.filter(ImageFilter.SMOOTH)
-    image = image.point(lambda i: i>binary_threshold and 255 or 0)
-    if invert:
+    if edgify:
+        image = image.filter(ImageFilter.FIND_EDGES)
         image = ImageChops.invert(image)
+        for i in range(0, smoothen):
+            image = image.filter(ImageFilter.SMOOTH)
+        image = image.point(lambda i: i>binary_threshold and 255 or 0)
+        if invert:
+            image = ImageChops.invert(image)
     return image
 
 def mean_intensity_value(image):
@@ -49,6 +60,7 @@ def zncc(image1, image2, x=0, y=0):
     if b*c == 0:
         return 0
     return a / (b*c)
+
 def dist(image, reference_image, method=Method.HAMMING):
     ''' Calculates the distance of an image to a reference image'''
     if method == Method.HAMMING:

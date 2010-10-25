@@ -4,10 +4,11 @@
 import sys
 import optparse
 import math
+import threading
 
 import Image, ImageChops, ImageFilter, ImageMath, ImageFont, ImageDraw
 
-from lib import create_image, dist, Method, edgify
+from lib import create_image, dist, Method, edgify, average
 
 # *** Unicode Symbols ***
 # Blockelements
@@ -75,19 +76,67 @@ SYMBOLS.extend(BLOCK_ELEMENTS)
 SYMBOLS.extend(GEOM_SHAPES_EXERPT)
 SYMBOLS.extend(MISC_SYMBOLS)
 
+#AVG_SYMBOLS = [' ', '.', ':', 'o', 'O', '8']
+AVG_SYMBOLS = [
+    ' ',       u'\u2581', u'\u2582', u'\u2583',
+    u'\u2584', u'\u2585', u'\u2586', u'\u2587',
+    u'\u2588'
+]
+
+class FindSymbol(threading.Thread):
+    def __init__(self, tile, method, ref_images):
+        threading.Thread.__init__(self) 
+        assert method in ('hamming', 'zncc'), 'Unknown method: %s' % method
+        self.tile = tile
+        self.method = method
+        self.ref_images = ref_images
+
+    def run(self):
+        diff = sys.maxint
+        idx = -1
+        for i, ref_img in enumerate(self.ref_images):
+            if self.method == 'hamming':
+                new_diff = dist(self.tile, ref_img, Method.HAMMING)
+            elif self.method == 'zncc':
+                new_diff = dist(self.tile, ref_img, Method.ZNCC)
+            if new_diff < diff:
+                diff = new_diff
+                idx = i
+        self.idx = idx
+
+
+#def find_symbol(x, y, delta_x, delta_y, method, ref_images):
+#    assert method in ('hamming', 'zncc'), 'Unknown method: %s' % method
+#    tile = image.crop((x*delta_x, y*delta_y, x*delta_x+delta_x, y*delta_y+delta_y))
+#    diff = sys.maxint
+#    idx = -1
+#    for i, ref_img in enumerate(ref_images):
+#        if method == 'hamming':
+#            new_diff = dist(tile, ref_img, Method.HAMMING)
+#        elif method == 'zncc':
+#            new_diff = dist(tile, ref_img, Method.ZNCC)
+#        if new_diff < diff:
+#            diff = new_diff
+#            idx = i
+#    return idx
+
 if __name__ == '__main__':
     parser = optparse.OptionParser()
     parser.add_option('--invert', action='store_true', dest='invert', default=False, help='invert image [default: %default]')
     parser.add_option('--smoothen', type="int", action='store', dest='smoothen', default=0, help='amount of smoothening the image [default: %default]')
     parser.add_option('--ignore', action='store_true', dest='ignore', default=False, help='ignore warnings [default: %default]')
     parser.add_option('--method', action='store', dest='method', default='hamming', help='method of symbol matching [default: %default]')
+    parser.add_option('--edgify', action='store_true', dest='edgify', default=False, help='detect edges [default: %default]')
     opts, args = parser.parse_args()
     
     if len(args) != 3:
         sys.exit('usage: %s [options] <input image> <binary threshold> <output width>' % sys.argv[0])
 
+    if opts.method != 'average' and not opts.edgify:
+        sys.exit('option --edgify is mandatory for methods other then "average"')
+
     image = Image.open(args[0])
-    image = edgify(image, int(args[1]), opts.smoothen, opts.invert)
+    image = edgify(image, int(args[1]), opts.smoothen, opts.invert, opts.edgify)
 
     image.save('%s_edgified.gif' % args[0])
 
@@ -116,27 +165,36 @@ if __name__ == '__main__':
         ref_images.append(im)
 
     print "Generating ASCII/UNICODE image ..."
-    s2 = u''
+    #s2 = u''
     y = 0
+    threads = []
     while True:
         if y*delta_y > input_height:
             break
+        inner = []
         for x in range(0, output_width):
+            #idx = find_symbol(x, y, delta_x, delta_y, opts.method, ref_images)
             tile = image.crop((x*delta_x, y*delta_y, x*delta_x+delta_x, y*delta_y+delta_y))
-            diff = sys.maxint
-            idx = -1
-            for i, ref_img in enumerate(ref_images):
-                if opts.method == 'hamming':
-                    new_diff = dist(tile, ref_img, Method.HAMMING)
-                elif opts.method == 'zncc':
-                    new_diff = dist(tile, ref_img, Method.ZNCC)
-                else:
-                    sys.exit('unknown method')
-                if new_diff < diff:
-                    diff = new_diff
-                    idx = i
-            s2 += SYMBOLS[idx]
-        s2 += '\n' 
+            if not opts.method == 'average':
+                inner.append(FindSymbol(tile, opts.method, ref_images))
+                inner[-1].start()
+            else:
+                inner.append(average(tile))
+            #s2 += SYMBOLS[idx]
+        #s2 += '\n' 
+        threads.append(inner)
         y += 1
+
+    s2 = u''
+    for inner in threads:
+        for t in inner:
+            if isinstance(t, FindSymbol):
+                t.join()
+                s2 += SYMBOLS[t.idx]
+            else:
+                idx = (255-t) / (255/len(AVG_SYMBOLS))
+                idx = min(idx, len(AVG_SYMBOLS)-1)
+                s2 += AVG_SYMBOLS[idx]
+        s2 += '\n'
 
     print s2
