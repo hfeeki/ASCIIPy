@@ -12,16 +12,28 @@ from lib import create_image, dist, Method, edgify, average
 
 # *** Unicode Symbols ***
 # Blockelements
+#BLOCK_ELEMENTS = [
+#    u'\u2580', u'\u2581', u'\u2582', u'\u2583',
+#    u'\u2584', u'\u2585', u'\u2586', u'\u2587',
+#    u'\u2588', u'\u2589', u'\u258a', u'\u258b',
+#    u'\u258c', u'\u258d', u'\u258e', u'\u258f',
+#    u'\u2590', u'\u2591', u'\u2592', u'\u2593',
+#    u'\u2594', u'\u2595', u'\u2596', u'\u2597',
+#    u'\u2598', u'\u2599', u'\u259a', u'\u259b',
+#    u'\u259c', u'\u259d', u'\u259e', u'\u259f',
+#]
+
 BLOCK_ELEMENTS = [
     u'\u2580', u'\u2581', u'\u2582', u'\u2583',
     u'\u2584', u'\u2585', u'\u2586', u'\u2587',
     u'\u2588', u'\u2589', u'\u258a', u'\u258b',
     u'\u258c', u'\u258d', u'\u258e', u'\u258f',
-    u'\u2590', u'\u2591', u'\u2592', u'\u2593',
+    u'\u2590',
     u'\u2594', u'\u2595', u'\u2596', u'\u2597',
     u'\u2598', u'\u2599', u'\u259a', u'\u259b',
     u'\u259c', u'\u259d', u'\u259e', u'\u259f',
 ]
+
 
 # Miscellaneous Symbols (exerpt)
 
@@ -60,28 +72,36 @@ GEOMETRIC_SHAPES = [
     u'\u25fc', u'\u25fd', u'\u25fe', u'\u25ff',
 ]
 
+#GEOM_SHAPES_EXERPT = [
+#    u'\u25a0', u'\u25aa', u'\u25ac', u'\u25ae',
+#    u'\u25b2', u'\u25b4', u'\u25b6', u'\u25b8',
+#    u'\u25bc', u'\u25be', u'\u25c0', u'\u25c2',
+#    u'\u25c6', u'\u25cf', u'\u25d6', u'\u25d7',
+#    u'\u25dc', u'\u25dd', u'\u25de', u'\u25df',
+#    u'\u25e2', u'\u25e3', u'\u25e4', u'\u25e5',
+#    u'\u25fc', u'\u25fe',
+#]
+
 GEOM_SHAPES_EXERPT = [
-    u'\u25a0', u'\u25aa', u'\u25ac', u'\u25ae',
-    u'\u25b2', u'\u25b4', u'\u25b6', u'\u25b8',
-    u'\u25bc', u'\u25be', u'\u25c0', u'\u25c2',
-    u'\u25c6', u'\u25cf', u'\u25d6', u'\u25d7',
-    u'\u25dc', u'\u25dd', u'\u25de', u'\u25df',
+    u'\u25a0', u'\u25ac', u'\u25ae',
+    u'\u25b2', u'\u25b6', 
+    u'\u25bc', u'\u25c0', 
     u'\u25e2', u'\u25e3', u'\u25e4', u'\u25e5',
     u'\u25fc', u'\u25fe',
 ]
 
 # Symbols to use
-SYMBOLS = [unicode(c) for c in ' ,.;:/\\\'"-|']
+#SYMBOLS = [unicode(c) for c in ' ,.;:/\\\'"-|']
+SYMBOLS = [u' ']
 SYMBOLS.extend(BLOCK_ELEMENTS)
 SYMBOLS.extend(GEOM_SHAPES_EXERPT)
-SYMBOLS.extend(MISC_SYMBOLS)
+#SYMBOLS.extend(MISC_SYMBOLS)
 
-#AVG_SYMBOLS = [' ', '.', ':', 'o', 'O', '8']
-AVG_SYMBOLS = [
-    ' ',       u'\u2581', u'\u2582', u'\u2583',
+AVG_SYMBOLS = {'ascii': [' ', '.', ':', 'o', 'O', '8'],
+               'unicode': [' ',       u'\u2581', u'\u2582', u'\u2583',
     u'\u2584', u'\u2585', u'\u2586', u'\u2587',
     u'\u2588'
-]
+]}
 
 class FindSymbol(threading.Thread):
     def __init__(self, tile, method, ref_images):
@@ -127,6 +147,7 @@ if __name__ == '__main__':
     parser.add_option('--ignore', action='store_true', dest='ignore', default=False, help='ignore warnings [default: %default]')
     parser.add_option('--method', action='store', dest='method', default='hamming', help='method of symbol matching [default: %default]')
     parser.add_option('--edgify', action='store_true', dest='edgify', default=False, help='detect edges [default: %default]')
+    parser.add_option('--ascii', action='store_true', dest='ascii', default=False, help='use ASCII symbols instead of UNICODE [default: %default]')
     opts, args = parser.parse_args()
     
     if len(args) != 3:
@@ -156,12 +177,13 @@ if __name__ == '__main__':
 
     print "Loading font ..."
     font_name = 'FreeMono.ttf'
-    font = ImageFont.truetype('fonts/freefont-20100919/%s' % font_name, min(delta_x, delta_y))
+    font = ImageFont.truetype('fonts/freefont-20100919/%s' % font_name, min(delta_x, delta_y)*1.75)
 
     print "Generating %d reference images ..." % (len(SYMBOLS))
     ref_images = []
-    for char in SYMBOLS:
+    for i, char in enumerate(SYMBOLS):
         im = create_image(char, font, delta_x, delta_y)
+	im.save('u%s.gif' % str(char.__repr__())[4:8])
         ref_images.append(im)
 
     print "Generating ASCII/UNICODE image ..."
@@ -192,9 +214,13 @@ if __name__ == '__main__':
                 t.join()
                 s2 += SYMBOLS[t.idx]
             else:
-                idx = (255-t) / (255/len(AVG_SYMBOLS))
-                idx = min(idx, len(AVG_SYMBOLS)-1)
-                s2 += AVG_SYMBOLS[idx]
+                if opts.ascii:
+                    avg_symbols = AVG_SYMBOLS['ascii']
+                else:
+                    avg_symbols = AVG_SYMBOLS['unicode']
+                idx = (255-t) / (255/len(avg_symbols))
+                idx = min(idx, len(avg_symbols)-1)
+                s2 += avg_symbols[idx]
         s2 += '\n'
 
     print s2
