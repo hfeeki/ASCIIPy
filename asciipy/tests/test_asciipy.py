@@ -36,7 +36,7 @@ A_STRS = [
 class TestASCIIPy(object):
     def test_convert_image(self):
         ic = ImageConverter(os.path.join(BASE, 'A.gif'))
-           res = ic.run(width=50, unic=False, method=ImageConverter.AVERAGE, bw=False, bw_threshold=200, smoothen=0, edgify=False)
+        res = ic.run(width=50, unic=False, method=ImageConverter.AVERAGE, bw=False, bw_threshold=200, smoothen=0, edgify=False)
 
         assert len(res) == len(A_STRS), 'Expected no. of lines to be %d, but got %d' % (len(A_STRS), len(res))
 

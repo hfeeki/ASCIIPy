@@ -107,11 +107,14 @@ Finally, here is an example of how to convert the test gif into an ASCII art ima
 Install / Troubleshooting
 -------------------------
 
-Try this first:
+Try to install ASCIIPy and run the test suite:
 
 ::
 
+    cd asciipy
     python setup.py install
+    easy_install nose
+    nosetests
 
 If you get this:
 
