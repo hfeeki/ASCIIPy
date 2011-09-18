@@ -30,20 +30,20 @@ class ImageConverter(object):
             temp_image = temp_image.point(lambda i: i > bw_threshold and 255 or 0)
 
         delta_x = int(round(float(temp_image.size[0]) / float(width)))
-        delta_y = 2*delta_x
+        delta_y = 2 * delta_x
 
         y = 0
         strings = []
 
         # convert image into ascii/unicode strings
         while True:
-            if y*delta_y > temp_image.size[1]:
+            if y*delta_y >= temp_image.size[1]:
                 break
             s = ''
             for x in range(0, width):
                 tile = temp_image.crop((x*delta_x, y*delta_y, x*delta_x+delta_x, y*delta_y+delta_y))
                 if method == self.HAMMING:
-		    s += self._find_symbol(tile)
+                    s += self._find_symbol(tile)
                 elif method == self.AVERAGE:
                     if not unic:
                         avg_symbols = AVG_SYMBOLS['ascii']
