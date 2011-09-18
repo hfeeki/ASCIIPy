@@ -1,14 +1,18 @@
 import sys
+import os
 
 import Image, ImageChops, ImageFilter
 
 from symbols import SYMBOLS, AVG_SYMBOLS
 
+BASE = os.path.dirname(__file__)
+print BASE
+
 class ImageConverter(object):
     AVERAGE = 0
     HAMMING = 1
 
-    _ref_images = [Image.open('ref_images/u%s.gif' % str(char.__repr__())[4:8]) for char in SYMBOLS]
+    _ref_images = [Image.open(os.path.join(BASE, 'ref_images/u%s.gif' % str(char.__repr__())[4:8])) for char in SYMBOLS]
 
     def __init__(self, image_file_name):
         self.image = Image.open(image_file_name).convert('L')
