@@ -6,7 +6,6 @@ import Image, ImageChops, ImageFilter
 from symbols import SYMBOLS, AVG_SYMBOLS
 
 BASE = os.path.dirname(__file__)
-print BASE
 
 class ImageConverter(object):
     AVERAGE = 0
