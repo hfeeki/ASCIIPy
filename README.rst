@@ -12,7 +12,9 @@ ASCIIPy comes with a console script called "asciipy", which should be available 
 Examples
 --------
 
-Here is an example of how to convert the test gif into a Unicode art image:
+Here is an example of how to convert the test gif into a Unicode art image 
+
+(**Note**: You have to use a monospace font or the resulting image will look like garbage - you should see a capital "A" with clean edges):
 
 ::
 
